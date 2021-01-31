@@ -22,7 +22,6 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-
         SparkSession sparkSession = createSparkSession();
 
         Dataset<MyWonderfulClass> inputDataset = generateDummyInputDataset(10, sparkSession);
@@ -32,6 +31,10 @@ public class Main {
         processedData.show();
     }
 
+    /**
+     * Initialize SparkSession with a local cluster. You can also use it on an existing cluster by changing the master and address.
+     * @return SparkSession
+     */
     private static SparkSession createSparkSession() {
         SparkSession.Builder builder = new SparkSession.Builder();
         builder = builder.master("local[*]");
@@ -46,6 +49,10 @@ public class Main {
         return sparkSession;
     }
 
+    /**
+     * Implementation of the UDF
+     * @return ID of type Long
+     */
     private static UDF1<byte[], Long> extractIdUDF() {
         return (byteArray) -> {
             if (byteArray != null) {
@@ -60,12 +67,24 @@ public class Main {
         };
     }
 
+    /**
+     * Method that shows how to apply the UDF we just created, to extract the ID as long value and generate a new column from it.
+     * @param data Input Dataset of MyWonderfulClass objects
+     * @return DataSet that contains a Row with the new column of type Long containing the ID of the MyWonderfulClass object
+     */
     private static Dataset<Row> processDataset(Dataset<MyWonderfulClass> data) {
         return data
                 .withColumn( "ID", functions.callUDF( "extractIdUDF", new Column("value")))
                 .drop("value");
     }
 
+    /**
+     * To read data we first need to create it. This method is not related to this exercise, but it simply creates N
+     * MyWonderfulClass objects and generates a DataSet, storing them as binary type.
+     * @param size Number of MyWonderfulClass elements to be created.
+     * @param sparkSession SparkSession object.
+     * @return Dataset<MyWonderfulClass> object that contains the size elements encoded as binary type.
+     */
     private static Dataset<MyWonderfulClass> generateDummyInputDataset(int size, SparkSession sparkSession) {
         List<MyWonderfulClass> list = new ArrayList<MyWonderfulClass>();
 
